@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'egg'
-  s.version     = '0.0.1'
+  s.version     = '0.1.0'
   s.date        = '2014-08-07'
   s.summary     = "Egg"
   s.description = "Minimalist dependency management for XCode projects"
