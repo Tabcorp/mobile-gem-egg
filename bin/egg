@@ -1,0 +1,10 @@
+#!/usr/bin/ruby
+
+require 'egg'
+
+Dir.glob("*.eggfile").each { |eggfilepath|
+  puts "Processing #{eggfilepath}";
+  rootEggfile = Eggfile.read(eggfilepath)
+  installer = Installer.new(rootEggfile)
+  installer.install();
+}
