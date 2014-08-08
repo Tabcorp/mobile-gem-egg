@@ -98,7 +98,8 @@ class InstalledEgg
       eggfilePath = "#{@installationPath}/#{@name}.eggfile"
       if File.exists? eggfilePath
         @eggfile = Eggfile.read(eggfilePath)
-        FileUtils.symlink "..", "#{@installationPath}/#{@name}.eggs"
+        doteggs = "#{@installationPath}/#{@name}.eggs"
+        FileUtils.symlink "..", doteggs unless File.exists? doteggs
       end
     end
 end

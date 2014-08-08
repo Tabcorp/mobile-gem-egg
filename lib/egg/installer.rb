@@ -29,6 +29,7 @@ class Installer
     eggLibraryName = "#{@rootEggfile.name}-eggs"
     project = Xcodeproj::Project.new("#{installPath}/#{eggLibraryName}.xcodeproj")
     target = project.new_target(:static_library, eggLibraryName, :ios, "5.1.1")
+
     # Add a dummy.m file
     File.open("#{installPath}/Dummy.m", 'w') {|f| f.write("// Dummy File to keep the compiler happy") }
     dummyFileRef = project.new_file("Dummy.m")
@@ -36,8 +37,16 @@ class Installer
 
     project.build_configuration_list.set_setting("ONLY_ACTIVE_ARCH","NO")
 
-    libGroup = project.new_group('lib');
+    # Add an xcconfig file for inclusion
+    File.open("#{installPath}/eggs.xcconfig", 'w') { |f|
+      f.write("EGG_HEADER_SEARCH_PATHS =")
+      @installedEggs.values.each { |dependency|
+        f.write(" \"#{dependency.installationPath}\"")
+      }
+      f.write("\n")
+    }
 
+    libGroup = project.new_group('lib');
     @installedEggs.values.each { |dependency|
       depTarget = findTarget(dependency.installationPath, dependency.name)
       depProjectReference = libGroup.new_reference(depTarget.project.path);
