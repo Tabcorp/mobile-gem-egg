@@ -15,7 +15,8 @@ class Installer
   end
 
   def install()
-    installPath = "#{@rootEggfile.name}.eggs"
+    Dir.mkdir ".eggs" unless File.exists? ".eggs"
+    installPath = ".eggs/#{@rootEggfile.name}"
     Dir.mkdir installPath unless File.exists? installPath
 
     # Prepare all the repositories
