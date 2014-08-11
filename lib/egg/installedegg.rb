@@ -38,7 +38,7 @@ class InstalledEgg
 
       if egg.relativePath
           # Create symlink
-          FileUtils.symlink File.absolute_path(egg.relativePath), installationPath
+          FileUtils.symlink File.absolute_path(egg.relativePath), installationPath unless File.exists? installationPath
           return InstalledEgg.new(name, nil, egg.relativePath, installationPath)
       else
           remote = egg.url
