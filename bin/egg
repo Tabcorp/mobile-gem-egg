@@ -2,9 +2,16 @@
 
 require 'egg'
 
-Dir.glob("*.eggfile").each { |eggfilepath|
-  puts "Processing #{eggfilepath}";
-  rootEggfile = Eggfile.read(eggfilepath)
-  installer = Installer.new(rootEggfile)
-  installer.install();
+paths = ARGV;
+if paths.count == 0
+  paths << "*.eggfile"
+end
+
+paths.each { |path|
+  Dir.glob(path).each { |eggfilepath|
+    puts "Processing #{eggfilepath}";
+    rootEggfile = Eggfile.read(eggfilepath)
+    installer = Installer.new(rootEggfile)
+    installer.install();
+  }
 }
