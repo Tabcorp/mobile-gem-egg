@@ -11,6 +11,8 @@ require 'egg/installedegg'
 class Installer
   def initialize(eggfile)
     @rootEggfile = eggfile
+    puts "[!] Root Eggfile must specify platform" unless eggfile.platform != nil
+    assert {eggfile.platform != nil}
     @installedEggs = {}
   end
 
@@ -29,7 +31,11 @@ class Installer
     # Create an Xcode project
     eggLibraryName = "#{@rootEggfile.name}-eggs"
     project = Xcodeproj::Project.new("#{installPath}/#{eggLibraryName}.xcodeproj")
-    target = project.new_target(:static_library, eggLibraryName, :ios, "5.1.1")
+    deploymentTarget = "5.1.1"
+    if (@rootEggfile.platform == :osx)
+      deploymentTarget = "10.9"
+    end
+    target = project.new_target(:static_library, eggLibraryName, @rootEggfile.platform, deploymentTarget)
 
     # Add a dummy.m file
     File.open("#{installPath}/Dummy.m", 'w') {|f| f.write("// Dummy File to keep the compiler happy") }

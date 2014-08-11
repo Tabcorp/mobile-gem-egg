@@ -4,6 +4,7 @@ require 'egg/assertion'
 # Class to represent an Eggfile
 class Eggfile
   attr_reader :name, :eggs
+  attr_accessor :platform
 
   def initialize(name)
     @name = name
@@ -30,4 +31,8 @@ end
 def egg(name, config)
   egg = Egg.new(name, config)
   $currentEggfile.addEgg(egg)
+end
+
+def platform(platform)
+  $currentEggfile.platform = platform
 end
