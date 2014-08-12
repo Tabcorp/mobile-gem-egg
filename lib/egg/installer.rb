@@ -35,7 +35,9 @@ class Installer
     if (@rootEggfile.platform == :osx)
       deploymentTarget = "10.9"
     end
+
     target = project.new_target(:static_library, eggLibraryName, @rootEggfile.platform, deploymentTarget)
+    target.instance_variable_set(:@uuid, Digest::MD5.hexdigest(eggLibraryName)[0,24].upcase)
 
     # Add a dummy.m file
     File.open("#{installPath}/Dummy.m", 'w') {|f| f.write("// Dummy File to keep the compiler happy") }
