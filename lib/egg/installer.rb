@@ -1,5 +1,7 @@
 require 'xcodeproj'
 
+require 'pathname'
+
 require 'egg/assertion'
 require 'egg/eggfile'
 require 'egg/egg'
@@ -18,19 +20,20 @@ class Installer
 
   def install()
     Dir.mkdir ".eggs" unless File.exists? ".eggs"
-    installPath = ".eggs/#{@rootEggfile.name}"
-    Dir.mkdir installPath unless File.exists? installPath
+    installPathString = ".eggs/#{@rootEggfile.name}"
+    rootPath = Pathname.new(File.absolute_path(""))
+    Dir.mkdir installPathString unless File.exists? installPathString
 
     # Prepare all the repositories
     @pendingEggs = @rootEggfile.eggs
     while !@pendingEggs.empty? do
       egg = @pendingEggs.shift
-      installEgg(egg, installPath)
+      installEgg(egg, installPathString)
     end
 
     # Create an Xcode project
     eggLibraryName = "#{@rootEggfile.name}-eggs"
-    project = Xcodeproj::Project.new("#{installPath}/#{eggLibraryName}.xcodeproj")
+    project = Xcodeproj::Project.new("#{installPathString}/#{eggLibraryName}.xcodeproj")
     deploymentTarget = "5.1.1"
     if (@rootEggfile.platform == :osx)
       deploymentTarget = "10.9"
@@ -40,25 +43,21 @@ class Installer
     target.instance_variable_set(:@uuid, Digest::MD5.hexdigest(eggLibraryName)[0,24].upcase)
 
     # Add a dummy.m file
-    File.open("#{installPath}/Dummy.m", 'w') {|f| f.write("// Dummy File to keep the compiler happy") }
+    File.open("#{installPathString}/Dummy.m", 'w') {|f| f.write("// Dummy File to keep the compiler happy") }
     dummyFileRef = project.new_file("Dummy.m")
     target.add_file_references([dummyFileRef])
 
     project.build_configuration_list.set_setting("ONLY_ACTIVE_ARCH","NO")
 
-    # Add an xcconfig file for inclusion
-    File.open("#{installPath}/eggs.xcconfig", 'w') { |f|
-      f.write("EGG_HEADER_SEARCH_PATHS =")
-      @installedEggs.values.each { |dependency|
-        f.write(" \"#{dependency.installationPath}\"")
-      }
-      f.write("\n")
-    }
+    includePaths = []
 
     libGroup = project.new_group('lib');
     @installedEggs.values.each { |dependency|
       depTarget = findTarget(dependency.installationPath, dependency.name)
-      depProjectReference = libGroup.new_reference(depTarget.project.path);
+      projectPath = Pathname.new depTarget.project.path
+      depProjectReference = libGroup.new_reference(projectPath.to_s);
+
+      includePaths << projectPath.dirname.relative_path_from(rootPath).to_s
 
       # Add the dep target as a dependency of the main target
       target.add_dependency(depTarget);
@@ -89,6 +88,15 @@ class Installer
       project.root_object.project_references << projectReference
 
       target.frameworks_build_phase.add_file_reference(referenceProxy)
+    }
+
+    # Add an xcconfig file for inclusion
+    File.open("#{installPathString}/eggs.xcconfig", 'w') { |f|
+      f.write("EGG_HEADER_SEARCH_PATHS =")
+      includePaths.each { |path|
+        f.write(" \"#{path}\"")
+      }
+      f.write("\n")
     }
 
     project.save()
