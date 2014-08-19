@@ -115,14 +115,16 @@ class Installer
 
   private
   def findTarget(path, targetName)
-    Dir.glob("#{path}/*.xcodeproj").each { |projectPath|
+    globPattern = File.join(path,"**","/*.xcodeproj")
+    Dir.glob(globPattern).each { |projectPath|
       project = Xcodeproj::Project.open(projectPath)
       target = project.targets.find { |t| t.name == targetName }
       if target
         return target
       end
     }
-    puts "[!] Target #{targetName} not found in #{path}/*.xcodeproj"
+
+    puts "[!] Target #{targetName} not found in #{globPattern}"
     assert { false }
   end
 end
