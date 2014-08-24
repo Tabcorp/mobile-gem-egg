@@ -120,8 +120,6 @@ class Installer
 
   private
   def installEgg(egg, path)
-    installationPath = "#{path}/#{egg.name}"
-
     installedEgg = @installedEggs[egg.name]
     if installedEgg
       installedEgg.ensureCompatibilityWith(egg.url)
@@ -131,7 +129,7 @@ class Installer
       end
       return;
     else
-      installedEgg = InstalledEgg.installEgg(egg, installationPath)
+      installedEgg = InstalledEgg.installEgg(egg, path)
       @installedEggs[egg.name] = installedEgg
       @pendingEggs += installedEgg.dependencies;
     end

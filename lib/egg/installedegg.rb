@@ -7,12 +7,13 @@ require 'egg/installedegg'
 # Class to represent an egg that has been installed
 # NB: dependencies may not have been installed yet, and it may need to be updated to a different commit
 class InstalledEgg
-  attr_reader :name, :remote, :installationPath, :relativePath, :sha
+  attr_reader :name, :remote, :installationRootPath, :installationPath, :relativePath, :sha
 
-    def initialize(name, remote, relativePath, installationPath)
+    def initialize(name, remote, relativePath, installationRootPath, installationPath)
         @name = name
         @remote = remote
         @relativePath = relativePath
+        @installationRootPath = installationRootPath
         @installationPath = installationPath
         @sha = nil
         loadEggfile
@@ -32,14 +33,15 @@ class InstalledEgg
 
     # Installs an egg, (not its dependencies)
     # This is done by either cloning the repo, or updating the repo if it already exists
-    def self.installEgg(egg, installationPath)
+    def self.installEgg(egg, path)
+      installationPath = "#{path}/#{egg.name}"
       name = egg.name
       sha = egg.sha
 
       if egg.relativePath
           # Create symlink
           FileUtils.symlink File.absolute_path(egg.relativePath), installationPath unless File.exists? installationPath
-          return InstalledEgg.new(name, nil, egg.relativePath, installationPath)
+          return InstalledEgg.new(name, nil, egg.relativePath, path, installationPath)
       else
           remote = egg.url
 
@@ -57,7 +59,7 @@ class InstalledEgg
             repo = Git.clone(remote, installationPath)
           end
 
-          installedEgg = InstalledEgg.new(name, remote, nil, installationPath)
+          installedEgg = InstalledEgg.new(name, remote, nil, path, installationPath)
           if sha
             installedEgg.sha = sha
           end
@@ -101,8 +103,17 @@ class InstalledEgg
 
         doteggs = "#{@installationPath}/.eggs"
         Dir.mkdir doteggs unless File.exists? doteggs
-        linkpath = "#{doteggs}/#{name}"
-        FileUtils.symlink "../..", linkpath unless File.exists? linkpath
+
+        relativeLinkPath = "../.."
+        rootEggPath = Pathname.new(@installationRootPath)
+        if @relativePath
+          symlinkPath = Pathname.new(File.join(@relativePath,".eggs"))
+          relativeLinkPath = rootEggPath.relative_path_from(symlinkPath)
+        end
+        linkpath = "#{doteggs}/#{@name}"
+        FileUtils.symlink relativeLinkPath, linkpath unless File.exists? linkpath
+        linkpath = "#{doteggs}/#{rootEggPath.basename}"
+        FileUtils.symlink relativeLinkPath, linkpath unless File.exists? linkpath
       end
     end
 end
