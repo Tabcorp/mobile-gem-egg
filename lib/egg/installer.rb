@@ -41,6 +41,7 @@ class Installer
 
     target = project.new_target(:static_library, eggLibraryName, @rootEggfile.platform, deploymentTarget)
     target.instance_variable_set(:@uuid, Digest::MD5.hexdigest(eggLibraryName)[0,24].upcase)
+    target.build_configuration_list.set_setting("COPY_PHASE_STRIP","NO")
 
     # Add a dummy.m file
     File.open("#{installPathString}/Dummy.m", 'w') {|f| f.write("// Dummy File to keep the compiler happy") }
@@ -48,6 +49,8 @@ class Installer
     target.add_file_references([dummyFileRef])
 
     project.build_configuration_list.set_setting("ONLY_ACTIVE_ARCH","NO")
+    project.build_configuration_list.set_setting("COPY_PHASE_STRIP","NO")
+    project.build_configuration_list.set_setting("STRIP_INSTALLED_PRODUCT","NO")
 
     includePaths = []
     frameworks = []
