@@ -2,6 +2,7 @@ require 'git'
 
 require 'egg/eggfile'
 require 'egg/installedegg'
+require 'egg/gitReferenceLibrary'
 
 ##############################################
 # Class to represent an egg that has been installed
@@ -51,12 +52,12 @@ class InstalledEgg
             if !origin || remote != origin.url
               raise "[!] #{name} already on disk, but does not match source repo #{remote}; aborting!"
             end
+            GitReferenceLibrary.instance.update(remote)
             puts "Updating #{name}"
             repo.checkout('master')
             repo.pull
           else
-            puts "Cloning #{name}"
-            repo = Git.clone(remote, installationPath)
+            GitReferenceLibrary.instance.clone(remote, installationPath)
           end
 
           installedEgg = InstalledEgg.new(name, remote, nil, path, installationPath)
